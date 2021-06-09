@@ -3,8 +3,11 @@ from bs4 import BeautifulSoup
 import requests
 import sqlite3
 import datetime
+import os
 
 
+total = len(item)
+add_new = []
 page_div = ""
 date_now = datetime.datetime.now().strftime("%d.%m.%y %H.%M")
 user_agent = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -54,6 +57,10 @@ def save_request_page(name):
             save_image(x_image, x_video, name, count)
         count += 1
 
+    global total
+    print(total)
+    total -= 1
+
 
 def save_image(image, video, name, count):
 
@@ -87,7 +94,7 @@ def save_image(image, video, name, count):
     connect_db.close()
 
     div_page(name, s_image, s_video)
-    print("save new {}".format(name))
+    add_new.append(name)
 
 
 def div_page(name, image, video):
@@ -130,10 +137,24 @@ def create_new():
 
 
 def main():
+    if os.path.exists("image") is not True:
+        os.mkdir("image")
+    if os.path.exists("saved page") is not True:
+        os.mkdir("saved page")
+
     for i in item:
         save_request_page(i)
+
     create_new()
+
+    print("\n")
+    for i in add_new:
+        print(i)
+
+    print("\n")
     input("---done press Enter---")
+
+    os.startfile("new.html")
 
 
 if __name__ == "__main__":
