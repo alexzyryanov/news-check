@@ -4,6 +4,7 @@ import requests
 import sqlite3
 import datetime
 import os
+import threading
 
 
 total = len(item)
@@ -58,7 +59,7 @@ def save_request_page(name):
         count += 1
 
     global total
-    print(total)
+    print(f"-- {total} -- {name} --")
     total -= 1
 
 
