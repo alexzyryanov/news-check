@@ -4,7 +4,6 @@ import requests
 import sqlite3
 import datetime
 import os
-import threading
 
 
 total = len(item)
@@ -46,6 +45,8 @@ def save_request_page(name):
     for i in search:
         image = i.find("img", class_=image_container).get("src")
         x_image = "http:{}".format(image)
+        if ".png" in x_image:
+            x_image = None
         try:
             video = i.find("video", class_=video_container).get("src")
             x_video = "http:{}".format(video)
@@ -70,9 +71,12 @@ def save_image(image, video, name, count):
     s_image = "image/{} {} {}.jpg".format(name, count, date_now)
     s_video = "image/{} {} {}.mp4".format(name, count, date_now)
 
-    r = requests.get(url=image, headers=user_agent)
-    with open(s_image, "wb") as f:
-        f.write(r.content)
+    if image is None:
+        pass
+    else:
+        r = requests.get(url=image, headers=user_agent)
+        with open(s_image, "wb") as f:
+            f.write(r.content)
 
     if video is None:
         pass
@@ -148,11 +152,9 @@ def main():
 
     create_new()
 
-    print("\n")
     for i in add_new:
         print(i)
 
-    print("\n")
     input("---done press Enter---")
 
     os.startfile("new.html")
