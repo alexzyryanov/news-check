@@ -59,14 +59,17 @@ class Application:
                 x_video = "http:{}".format(video)
             except Exception:
                 x_video = None
+            url_p = i.find("div", class_=url_container).find("a").get("href")
+            x_url = url_1.format(url_p, self.name)
+
             if x_image not in url_db:
-                self.download_image(x_image, x_video, count)
+                self.download_image(x_image, x_video, x_url, count)
             count += 1
         global total
         print(f"-- {total} -- {self.name} --")
         total -= 1
 
-    def download_image(self, image, video, count):
+    def download_image(self, image, video, x_url, count):
 
         """save image and video, save url in db"""
 
@@ -100,21 +103,21 @@ class Application:
         cursor.close()
         connect_db.close()
 
-        self.div_page(s_image, s_video)
+        self.div_page(s_image, s_video, x_url)
         add_new.append(self.name)
 
-    def div_page(self, image, video):
+    def div_page(self, image, video, x_url):
 
         """append content to div"""
 
         x = """
         <div class="content">
-            <div class="name">{}</div>
+            <div class="name"><a href="{}" target="_blank">{}</a></div>
             <div class="media">
                 <div class="image"><img src="{}"></div>
                 <div class="video"><video src="{}" controls></video></div>
             </div>
-        </div>\n""".format(self.name, image, video)
+        </div>\n""".format(x_url, self.name, image, video)
         global page_div
         page_div += x
 
