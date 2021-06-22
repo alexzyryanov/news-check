@@ -157,7 +157,7 @@ def start_application():
 
     create_new()
 
-    for i in add_new:
+    for i in set(add_new):
         print(i)
 
     input("---done press Enter---")
