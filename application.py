@@ -1,23 +1,12 @@
 from config import *
-from bs4 import BeautifulSoup
-import requests
-import sqlite3
-import datetime
-import os
 
 
-total = len(item)
-add_new = []
-page_div = ""
+div = ""
 
 
 class Application:
 
-    """download image and video, append data for html page"""
-
-    date_now = datetime.datetime.now().strftime("%d.%m.%y %H.%M")
-    user_agent = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                                "(KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"}
+    """check news, append new in html page"""
 
     def __init__(self, name):
         self.name = name
@@ -26,7 +15,7 @@ class Application:
 
         """save page, find url image and video, check url in db"""
 
-        r = requests.get(url=url.format(self.name), headers=self.user_agent)
+        r = requests.get(url=url.format(self.name), headers=user_agent)
         with open("saved page/{}.html".format(self.name), "wb") as f:
             f.write(r.content)
 
@@ -39,76 +28,52 @@ class Application:
         try:
             connect_db = sqlite3.connect("image_url.db")
             cursor = connect_db.cursor()
-            param = """SELECT url FROM image"""
+            param = """SELECT url FROM sp"""
             for i in cursor.execute(param):
                 url_db.append(i[0])
             cursor.close()
             connect_db.close()
-        except Exception:
-            print("don't have db")
+        except:
             pass
 
-        count = 0
         for i in search:
             image = i.find("img", class_=image_container).get("src")
             x_image = "http:{}".format(image)
             if ".png" in x_image:
                 x_image = None
+
             try:
                 video = i.find("video", class_=video_container).get("src")
                 x_video = "http:{}".format(video)
-            except Exception:
+            except:
                 x_video = None
+
             url_p = i.find("div", class_=url_container).find("a").get("href")
             x_url = url_1.format(url_p, self.name)
 
             if x_image not in url_db:
-                self.download_image(x_image, x_video, x_url, count)
-            count += 1
-        global total
-        print(f"-- {total} -- {self.name} --")
-        total -= 1
+                self.download_image(x_image, x_video, x_url)
 
-    def download_image(self, image, video, x_url, count):
+        print(f"-- {self.name} --")
 
-        """save image and video, save url in db"""
+    def download_image(self, image, video, x_url):
 
-        s_image = "image/{} {} {}.jpg".format(self.name, count, self.date_now)
-        s_video = "image/{} {} {}.mp4".format(self.name, count, self.date_now)
-
-        if image is None:
-            pass
-        else:
-            r = requests.get(url=image, headers=self.user_agent)
-            with open(s_image, "wb") as f:
-                f.write(r.content)
-
-        if video is None:
-            pass
-        else:
-            r = requests.get(url=video, headers=self.user_agent, stream=True)
-            with open(s_video, "wb") as f:
-                for chunk in r.iter_content(chunk_size=10000):
-                    if chunk:
-                        f.write(chunk)
+        """save url in db"""
 
         connect_db = sqlite3.connect("image_url.db")
         cursor = connect_db.cursor()
-        cursor.execute("""CREATE TABLE IF NOT EXISTS image
-                            (date TEXT, name TEXT, url TEXT)""")
+        cursor.execute("""CREATE TABLE IF NOT EXISTS sp (name TEXT, url TEXT)""")
         connect_db.commit()
-        cursor.execute("""INSERT INTO image VALUES (?, ?, ?)""",
-                       (self.date_now, self.name, image))
+        cursor.execute("""INSERT INTO sp VALUES (?, ?)""", (self.name, image))
         connect_db.commit()
         cursor.close()
         connect_db.close()
 
-        self.div_page(s_image, s_video, x_url)
-        add_new.append(self.name)
+        self.div_page(image, video, x_url)
 
     def div_page(self, image, video, x_url):
 
-        """append content to div"""
+        """append content in div"""
 
         x = """
         <div class="content">
@@ -118,13 +83,13 @@ class Application:
                 <div class="video"><video src="{}" controls></video></div>
             </div>
         </div>\n""".format(x_url, self.name, image, video)
-        global page_div
-        page_div += x
+        global div
+        div += x
 
 
 def create_new():
 
-    """create html page for div_page"""
+    """create html page"""
 
     page = """
     <!DOCTYPE html>
@@ -139,27 +104,21 @@ def create_new():
     <body>
         {}
     </body>
-    </html>""".format(page_div)
+    </html>""".format(div)
 
     with open("new.html", "w", encoding="utf-8") as f:
         f.write(page)
 
 
 def start_application():
-    if os.path.exists("image") is not True:
-        os.mkdir("image")
     if os.path.exists("saved page") is not True:
         os.mkdir("saved page")
-
-    for i in item:
-        app = Application(i)
-        app.save_page()
-
-    create_new()
-
-    for i in set(add_new):
-        print(i)
-
-    input("---done press Enter---")
-
-    os.startfile("new.html")
+    try:
+        for i in item:
+            app = Application(i)
+            app.save_page()
+        create_new()
+        os.startfile("new.html")
+    except:
+        create_new()
+        os.startfile("new.html")
